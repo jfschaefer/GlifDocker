@@ -52,11 +52,11 @@ RUN pip install --no-cache . && \
     jupyter labextension install @jupyter-widgets/jupyterlab-manager
 #     jupyter labextension install jupyterlab-gf-highlight
 
-# # syntax highlighting
-# WORKDIR /tmp
-# RUN git clone https://github.com/kaiamann/jupyterlab-gf-highlight.git
-# WORKDIR /tmp/jupyterlab-gf-highlight
-# RUN npm install && jupyter labextension link .
+# syntax highlighting
+WORKDIR /tmp
+RUN git clone https://github.com/kaiamann/jupyterlab-gf-highlight.git
+WORKDIR /tmp/jupyterlab-gf-highlight
+RUN npm install && jupyter labextension link .
 
 
 USER $NB_UID
