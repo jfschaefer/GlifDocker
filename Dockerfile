@@ -40,13 +40,16 @@ USER root
 WORKDIR /tmp
 RUN git clone --depth 1 https://github.com/ocaml/ocaml.git
 WORKDIR /tmp/ocaml
-RUN ./configure && make && make install && rm -rf ocaml
+RUN ./configure && make && make install
+WORKDIR /tmp
+RUN rm -rf ocaml
 RUN wget https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh 
 RUN echo "\n" | sh install.sh
 RUN apt-get update && apt-get -y --no-install-recommends install m4 bubblewrap patch unzip
 USER $NB_UID
 RUN opam init --disable-sandboxing --auto-setup && opam update && opam install --yes elpi
 ENV PATH="${PATH}:/home/jovyan/.opam/default/bin"
+RUN rm -rf ${HOME}/.opam/default/lib ${HOME}/.opam/default/.opam-switch ${HOME}/.opam/repo
 
 # GLIF KERNEL
 WORKDIR /tmp
@@ -68,6 +71,7 @@ RUN npm install && jupyter labextension link .
 
 # some more cleanup
 RUN apt-get -y --purge autoremove gcc make
+RUN rm -rf /usr/local/share/.cache
 
 USER $NB_UID
 WORKDIR $HOME
