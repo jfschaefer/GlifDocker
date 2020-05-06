@@ -16,6 +16,7 @@ RUN apt-get -y --no-install-recommends install apt-utils \
                                                default-jre \
                                                nodejs \
                                                gcc \
+                                               make \
     && rm -rf /var/lib/apt/lists/*
 
 # GF
@@ -29,37 +30,30 @@ RUN wget https://github.com/jfschaefer/JupyterGlifDemo/raw/master/mmt.jar
 RUN echo "\n\n" | java -jar mmt.jar :setup
 RUN rm mmt.jar
 ENV MMT_PATH="$HOME/MMT/systems/MMT"
-RUN java -jar MMT/systems/MMT/deploy/mmt.jar lmh install COMMA/GLF COMMA/forthel
-# glforthel
+RUN java -jar MMT/systems/MMT/deploy/mmt.jar lmh install
+RUN mkdir $HOME/MMT/MMT-content/COMMA
+WORKDIR $HOME/MMT/MMT-content/COMMA
+RUN git clone https://gl.mathhub.info/COMMA/glforthel.git && git clone https://gl.mathhub.info/COMMA/GLF.git
 
 # ELPI
 USER root
 WORKDIR /tmp
 RUN git clone --depth 1 https://github.com/ocaml/ocaml.git
 WORKDIR /tmp/ocaml
-RUN apt-get update
-run apt-get -y --no-install-recommends install make
-RUN ./configure && make && make install
+RUN ./configure && make && make install && rm -rf ocaml
 RUN wget https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh 
 RUN echo "\n" | sh install.sh
-RUN apt-get -y --no-install-recommends install m4
-RUN apt-get -y --no-install-recommends install bubblewrap
-RUN apt-get -y --no-install-recommends install patch unzip
-# RUN sysctl kernel.unprivileged_userns_clone=1
-# RUN chmod u+s /usr/bin/bwrap
+RUN apt-get update && apt-get -y --no-install-recommends install m4 bubblewrap patch unzip
 USER $NB_UID
-RUN opam init --disable-sandboxing --auto-setup
-RUN opam update 
-Run opam install --yes elpi
-ENV PATH="${PATH}:/home/jovyan/.opam/system/bin"
-USER root
+RUN opam init --disable-sandboxing --auto-setup && opam update && opam install --yes elpi
+ENV PATH="${PATH}:/home/jovyan/.opam/default/bin"
 
 # GLIF KERNEL
 WORKDIR /tmp
 USER $NB_UID
 RUN git clone https://github.com/KWARC/GLIF.git
 WORKDIR /tmp/GLIF
-RUN git checkout devel 
+# RUN git checkout devel 
 USER root
 RUN pip install --no-cache . && \
     python -m glif_kernel.install && \
@@ -72,6 +66,8 @@ RUN git clone https://github.com/kaiamann/jupyterlab-gf-highlight.git
 WORKDIR /tmp/jupyterlab-gf-highlight
 RUN npm install && jupyter labextension link .
 
+# some more cleanup
+RUN apt-get -y --purge autoremove gcc make
 
 USER $NB_UID
 WORKDIR $HOME
@@ -84,9 +80,5 @@ EXPOSE 8080 8081 8082 8083 8084 8085 8086 8087 8088 8089 8090 8091 8092 8093 809
 # alternative: pass -e JUPYTER_ENABLE_LAB=yes
 ENV JUPYTER_ENABLE_LAB=yes
 
-# run apt-get -y install opam
-# RUN sh <(curl -sL https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh)
-USER $NB_UID
 WORKDIR $HOME
 
-ENV PATH="${PATH}:/home/jovyan/.opam/default/bin"
