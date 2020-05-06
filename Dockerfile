@@ -1,6 +1,4 @@
-# FROM python:3.8-slim
-ARG BASE_CONTAINER=jupyter/base-notebook
-FROM $BASE_CONTAINER
+FROM jupyter/base-notebook
 
 USER root
 
@@ -17,8 +15,7 @@ RUN apt-get -y --no-install-recommends install apt-utils \
                                                git \
                                                default-jre \
                                                nodejs \
-                                               ocaml \
-                                               opam \
+                                               gcc \
     && rm -rf /var/lib/apt/lists/*
 
 # GF
@@ -27,18 +24,35 @@ RUN wget https://www.grammaticalframework.org/download/gf_3.10-2_amd64.deb && dp
 # MMT
 WORKDIR $HOME
 USER $NB_UID
-RUN wget https://github.com/UniFormal/MMT/releases/download/19.0.0/mmt.jar
+# RUN wget https://github.com/UniFormal/MMT/releases/download/19.0.0/mmt.jar
+RUN wget https://github.com/jfschaefer/JupyterGlifDemo/raw/master/mmt.jar
 RUN echo "\n\n" | java -jar mmt.jar :setup
 RUN rm mmt.jar
 ENV MMT_PATH="$HOME/MMT/systems/MMT"
+RUN java -jar MMT/systems/MMT/deploy/mmt.jar lmh install COMMA/GLF COMMA/forthel
+# glforthel
 
 # ELPI
 USER root
+WORKDIR /tmp
+RUN git clone --depth 1 https://github.com/ocaml/ocaml.git
+WORKDIR /tmp/ocaml
 RUN apt-get update
+run apt-get -y --no-install-recommends install make
+RUN ./configure && make && make install
+RUN wget https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh 
+RUN echo "\n" | sh install.sh
 RUN apt-get -y --no-install-recommends install m4
+RUN apt-get -y --no-install-recommends install bubblewrap
+RUN apt-get -y --no-install-recommends install patch unzip
+# RUN sysctl kernel.unprivileged_userns_clone=1
+# RUN chmod u+s /usr/bin/bwrap
 USER $NB_UID
-RUN opam init && opam install elpi
-# RUN apt-get -y --purge autoremove m4 opam ocaml
+RUN opam init --disable-sandboxing --auto-setup
+RUN opam update 
+Run opam install --yes elpi
+ENV PATH="${PATH}:/home/jovyan/.opam/system/bin"
+USER root
 
 # GLIF KERNEL
 WORKDIR /tmp
@@ -70,4 +84,9 @@ EXPOSE 8080 8081 8082 8083 8084 8085 8086 8087 8088 8089 8090 8091 8092 8093 809
 # alternative: pass -e JUPYTER_ENABLE_LAB=yes
 ENV JUPYTER_ENABLE_LAB=yes
 
-ENV PATH="${PATH}:/home/jovyan/.opam/system/bin"
+# run apt-get -y install opam
+# RUN sh <(curl -sL https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh)
+USER $NB_UID
+WORKDIR $HOME
+
+ENV PATH="${PATH}:/home/jovyan/.opam/default/bin"
