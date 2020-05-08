@@ -1,0 +1,12 @@
+Welcome to GLIF!
+
+You may either create new notebooks or take a look at our example notebooks in
+the notebooks folder.  The README file in the notebooks folder will provide
+more information on them.
+
+The MMT folder contains the MMT installation. It is visible, because it may be
+helpful for certain debugging scenarios.
+
+Here are some useful links:
+  - GLIF kernel repository: https://github.com/KWARC/GLIF
+  - Repo with Dockerfile for this container: https://github.com/jfschaefer/GlifDocker
